@@ -1,0 +1,13 @@
+{
+  "name": "prace.python.cz-frontend",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": "Petr Messner",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^3.0.3",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "semantic-ui-react": "^0.71.4"
+  }
+}
