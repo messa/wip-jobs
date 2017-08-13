@@ -16,45 +16,85 @@ const offerBodyPlaceholder = `
   Lorem ipsum dolor sit amet...
 `.replace(/^  /mg, '').trim() + '\n\n';
 
+const offerTypeCheckboxes = [
+  {key: 'typeFullTime', label: 'Full-time'},
+  {key: 'typePartTime', label: 'Part-time'},
+  {key: 'typeExternal', label: 'Externě'},
+  {key: 'typeInternship', label: 'Internship'},
+  {key: 'typeCofounder', label: 'Co-founder'},
+  {key: 'typeNonprofit', label: 'Nonprofit'},
+];
+
+const goodForCheckboxes = [
+  {key: 'forBeginners', label: 'Začátečníky - bez praxe, ale s nadšením :)'},
+  {key: 'forJuniors', label: 'Absolventy VŠ nebo programátory s kratší praxí'},
+  {key: 'forSeniors', label: 'Zkušené vývojáře'},
+];
+
+const locationPresets = [
+  {key: 'locationPresetPrague', label: 'Praha'},
+  {key: 'locationPresetBrno', label: 'Brno'},
+  {key: 'locationPresetOstrava', label: 'Ostrava'},
+];
+
+
 export default class extends React.Component {
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      title: '',
+      customLocation: '',
+      remote: false,
+    };
+    offerTypeCheckboxes.map(({key}) => { this.state[key] = false; });
+    goodForCheckboxes.map(({key}) => { this.state[key] = false; });
+    locationPresets.map(({key}) => { this.state[key] = false; });
+  }
+
   render() {
+    const renderCheckbox = ({key, label}) => (
+      <Form.Checkbox
+        key={key} label={label} checked={this.state[key]}
+        onChange={() => { this.setState({ [key]: !this.state[key] }) }}
+      />
+    );
     return (
       <Form>
+        { /* <pre>{JSON.stringify(this.state, null, 2)}</pre> */ }
 
         <Form.Input
           label='Název pozice'
           placeholder='např. Vývojář backendu online multiplayer her'
           size='big'
+          value={this.state.title}
+          onChange={event => { this.setState({ title: event.target.value }) }}
         />
 
         <Form.Group inline>
-          <Form.Checkbox label='Full-time' />
-          <Form.Checkbox label='Part-time' />
-          <Form.Checkbox label='Externě' />
-          <Form.Checkbox label='Internship' />
-          <Form.Checkbox label='Co-founder' />
-          <Form.Checkbox label='Nonprofit' />
+          {offerTypeCheckboxes.map(({key, label}) => renderCheckbox({key, label}))}
         </Form.Group>
 
         <Form.Group grouped>
           <label>Vhodné pro:</label>
-          <Form.Checkbox label='Začátečníky - bez praxe, ale s nadšením :)' />
-          <Form.Checkbox label='Absolventy VŠ nebo programátory s kratší praxí' />
-          <Form.Checkbox label='Zkušené vývojáře' />
+          {goodForCheckboxes.map(({key, label}) => renderCheckbox({key, label}))}
         </Form.Group>
 
         <h3>Lokalita</h3>
 
         <Form.Group>
-          <Form.Checkbox label='Praha' />
-          <Form.Checkbox label='Brno' />
-          <Form.Checkbox label='Ostrava' />
+          {locationPresets.map(({key, label}) => renderCheckbox({key, label}))}
         </Form.Group>
 
-        <Form.Input inline label='Jinde:' placeholder='např. Horní Dolní' />
+        <Form.Input
+          inline
+          label='Jinde:'
+          placeholder='např. Horní Dolní'
+          value={this.state.customLocation}
+          onChange={event => { this.setState({ customLocation: event.target.value }) }}
+        />
 
-        <Form.Checkbox label='Remote - práce na dálku' />
+        {renderCheckbox({ key: 'remote', label: 'Remote - práce na dálku' })}
 
         <h3>Popis pozice</h3>
 
@@ -76,13 +116,15 @@ export default class extends React.Component {
             placeholder={offerBodyPlaceholder}
             rows={15}
             style={{ fontFamily: 'monospace' }}
+            value={this.state.description}
+            onChange={(event) => { this.setState({ description: event.target.value }) }}
           />
         </div>
 
-        <h4>Náhled</h4>
+        <h3>Náhled</h3>
 
         <div className='vmargin'>
-          TODO
+          <pre>{this.state.description}</pre>
         </div>
 
         <div className='vmargin'>
