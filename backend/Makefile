@@ -7,7 +7,7 @@ check: $(venv_dir)/packages-installed
 
 venv: $(venv_dir)/packages-installed
 
-run-flask:
+run-flask: $(venv_dir)/packages-installed
 	FLASK_APP=backend.api:app FLASK_DEBUG=1 $(venv_dir)/bin/flask run
 
 $(venv_dir)/packages-installed: setup.py

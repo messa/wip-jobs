@@ -10,5 +10,6 @@ setup(
     packages=find_packages(exclude=['doc', 'tests']),
     install_requires=[
         'flask',
+        'markdown',
     ],
 )

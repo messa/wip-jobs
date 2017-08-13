@@ -1,6 +1,8 @@
 import React from 'react'
-import { Button, Form } from 'semantic-ui-react'
+import { Button, Form, Checkbox } from 'semantic-ui-react'
+import 'isomorphic-fetch'
 
+import postJSON from '../util/postJSON'
 
 const offerBodyPlaceholder = `
   Who are we looking for
@@ -26,7 +28,7 @@ const offerTypeCheckboxes = [
 ];
 
 const goodForCheckboxes = [
-  {key: 'forBeginners', label: 'Začátečníky - bez praxe, ale s nadšením :)'},
+  {key: 'forBeginners', label: 'Začátečníky – bez praxe, ale s nadšením :)'},
   {key: 'forJuniors', label: 'Absolventy VŠ nebo programátory s kratší praxí'},
   {key: 'forSeniors', label: 'Zkušené vývojáře'},
 ];
@@ -37,6 +39,8 @@ const locationPresets = [
   {key: 'locationPresetOstrava', label: 'Ostrava'},
 ];
 
+const markdownUsageUrl = 'https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents';
+
 
 export default class extends React.Component {
 
@@ -45,11 +49,53 @@ export default class extends React.Component {
     this.state = {
       title: '',
       customLocation: '',
+      description: '',
       remote: false,
     };
     offerTypeCheckboxes.map(({key}) => { this.state[key] = false; });
     goodForCheckboxes.map(({key}) => { this.state[key] = false; });
     locationPresets.map(({key}) => { this.state[key] = false; });
+
+    this.descriptionMarkdownStatus = {
+      requestLive: false,
+      lastRequestedData: null,
+    };
+  }
+
+  componentDidMount() {
+    this.checkIntervalId = setInterval(() => { this.periodicCheck(); }, 1000);
+  }
+
+  componentWillUnmont() {
+    clearInterval(this.checkIntervalId);
+  }
+
+  periodicCheck() {
+    this.fetchDescriptionMarkdown();
+  }
+
+  fetchDescriptionMarkdown() {
+    const markdownSource = this.state.description;
+    const status = this.descriptionMarkdownStatus;
+    if (!status.requestLive && markdownSource != status.lastRequestedData) {
+      status.requestLive = true;
+      status.lastRequestedData = markdownSource;
+      postJSON('/api/render-markdown', { markdownSource }).then(({ html }) => {
+        this.setState({
+          renderDescriptionError: null,
+          descriptionHTML: html,
+        });
+      }).catch((err) => {
+        if (window.console) {
+          console.warn('Failed to render description markdown:', err.toString());
+        }
+        this.setState({
+          renderDescriptionError: JSON.stringify(err),
+        });
+      }).then(() => {
+        status.requestLive = false;
+      });
+    }
   }
 
   render() {
@@ -61,7 +107,7 @@ export default class extends React.Component {
     );
     return (
       <Form>
-        { /* <pre>{JSON.stringify(this.state, null, 2)}</pre> */ }
+        { /* <pre style={{ fontSize: 10 }}>{JSON.stringify(this.state, null, 2)}</pre> */ }
 
         <Form.Input
           label='Název pozice'
@@ -71,12 +117,14 @@ export default class extends React.Component {
           onChange={event => { this.setState({ title: event.target.value }) }}
         />
 
+        <label className="label">Druh úvazku</label>
+
         <Form.Group inline>
           {offerTypeCheckboxes.map(({key, label}) => renderCheckbox({key, label}))}
         </Form.Group>
 
         <Form.Group grouped>
-          <label>Vhodné pro:</label>
+          <label className="label">Vhodné pro</label>
           {goodForCheckboxes.map(({key, label}) => renderCheckbox({key, label}))}
         </Form.Group>
 
@@ -94,9 +142,9 @@ export default class extends React.Component {
           onChange={event => { this.setState({ customLocation: event.target.value }) }}
         />
 
-        {renderCheckbox({ key: 'remote', label: 'Remote - práce na dálku' })}
+        {renderCheckbox({ key: 'remote', label: (<label><b>Remote</b> – práce na dálku</label>) })}
 
-        <h3>Popis pozice</h3>
+        <h3>Text nabídky</h3>
 
         <p>
           Zde prosím popište pozici, budoucí tým, produkt, firmu, používané technologie...
@@ -104,14 +152,20 @@ export default class extends React.Component {
         </p>
 
         <p>
-          Text se formátuje pomocí jazyka{' '}
-          <a href='https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents'>Markdown</a>:<br/>
-          <b>tučný text</b> se píše <code>**tučný text**</code>,{' '}
-          <a href="http://python.cz/">odkaz</a> se píše <code>{'[odkaz](http://python.cz/)'}</code>
+          Text se formátuje pomocí jazyka <a href={markdownUsageUrl} target='_blank'>Markdown</a>:
         </p>
+        <ul>
+          <li>
+            <b>tučný text</b> se píše <code>**tučný text**</code>
+          </li>
+          <li>
+            <a href="http://python.cz/" target='_blank'>odkaz</a> se píše <code>{'[odkaz](http://python.cz/)'}</code>
+          </li>
+        </ul>
 
         <div className='vmargin'>
           <Form.TextArea
+            label='Popis pozice'
             autoHeight
             placeholder={offerBodyPlaceholder}
             rows={15}
@@ -121,10 +175,10 @@ export default class extends React.Component {
           />
         </div>
 
-        <h3>Náhled</h3>
+        <h2>Náhled</h2>
 
         <div className='vmargin'>
-          <pre>{this.state.description}</pre>
+          <div dangerouslySetInnerHTML={{__html:this.state.descriptionHTML}} />
         </div>
 
         <div className='vmargin'>
